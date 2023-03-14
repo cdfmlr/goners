@@ -1,6 +1,8 @@
 package goners
 
 import (
+	"bytes"
+	"encoding/hex"
 	"time"
 
 	"github.com/google/gopacket"
@@ -76,4 +78,20 @@ func NewLayer(layer gopacket.Layer) Layer {
 	}
 
 	return l
+}
+
+// Dump is my version of gopacket.LayerDump
+func (l Layer) Dump() string {
+	var b bytes.Buffer
+	if d, ok := l.layer.(gopacket.Dumper); ok {
+		dump := d.Dump()
+		if dump != "" {
+			b.WriteString(dump)
+			if dump[len(dump)-1] != '\n' {
+				b.WriteByte('\n')
+			}
+		}
+	}
+	b.WriteString(hex.Dump(l.layer.LayerContents()))
+	return b.String()
 }

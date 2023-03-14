@@ -9,6 +9,7 @@ import (
 	"github.com/google/gopacket/pcap"
 )
 
+// sudo go test . -run TestNewPacket -v
 func TestNewPacket(t *testing.T) {
 	handle, err := pcap.OpenLive("lo0", 1600, true, pcap.BlockForever)
 	if err != nil {
@@ -27,6 +28,11 @@ func TestNewPacket(t *testing.T) {
 			t.Error(err)
 		}
 		t.Logf(string(packetJson))
+
+
+		for i, l := range packet.Layers {
+			t.Logf("--- Layer %v (%v): \n%v\n", i, l.LayerType, l.Dump())
+		}
 
 		break
 	}

@@ -5,7 +5,7 @@ import (
 	"net"
 	"strings"
 
-	// "os"
+	"os"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/pcap"
@@ -14,13 +14,13 @@ import (
 func readingLivePackets() {
 	if handle, err := pcap.OpenLive("lo0", 1600, true, pcap.BlockForever); err != nil {
 		panic(err)
-	} else if err := handle.SetBPFFilter("tcp portrange 9000-9100"); err != nil { // optional
+	} else if err := handle.SetBPFFilter("tcp"); err != nil { // optional
 		panic(err)
 	} else {
 		packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 		for packet := range packetSource.Packets() {
 			handlePacket(packet) // Do something with a packet here.
-			// os.Exit(0)
+			os.Exit(0)
 		}
 	}
 }
