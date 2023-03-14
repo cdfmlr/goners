@@ -151,17 +151,6 @@ var ipTypeMappings = []ipTypeMapping{
 	{IPTypeGlobalUnicast, net.IP.IsGlobalUnicast, "GlobalUnicast"},
 }
 
-// deprecated: use ipTypeMappings instead.
-//
-// ipTypeToString maps log2(IPTypeXxx) -> "Xxx"
-//
-// ⚠️ 必须和上面的那组 const 保持一致。
-var ipTypeToString = []string{
-	"Unspecified", "Loopback", "Private", "Multicast",
-	"InterfaceLocalMulticast", "LinkLocalMulticast",
-	"LinkLocalUnicast", "GlobalUnicast",
-}
-
 // LookupDevices lists local network interfaces into a []Device.
 func LookupDevices() ([]Device, error) {
 	netInterfaces, err := net.Interfaces()
