@@ -144,5 +144,5 @@ func ifconfig() {
 
 func main() {
 	ifconfig()
-	// readingLivePackets()
+	readingLivePackets()
 }
