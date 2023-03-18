@@ -3,6 +3,8 @@ package goners
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/google/gopacket"
@@ -94,4 +96,43 @@ func (l Layer) Dump() string {
 	}
 	b.WriteString(hex.Dump(l.layer.LayerContents()))
 	return b.String()
+}
+
+// Fields is a map[string]string version of gopacket.layerString
+func (l Layer) Fields() map[string]string {
+	fields := make(map[string]string)
+
+	v := reflect.ValueOf(l.layer)
+
+	// unwrap: interface, ptr
+	for unwrapTimes := 0; unwrapTimes < 3; unwrapTimes++ {
+		switch v.Type().Kind() {
+		case reflect.Interface, reflect.Ptr:
+			if v.IsNil() {
+				return fields
+			}
+			v = v.Elem()
+		}
+	}
+
+	if v.Type().Kind() != reflect.Struct {
+		fields["value"] = fmt.Sprintf("%v", v.Interface())
+		return fields
+	}
+
+	// assert v.Type().Kind() == reflect.Struct
+	for i := 0; i < v.NumField(); i++ {
+		ftype := v.Type().Field(i)
+		if ftype.Anonymous { // embedded field
+			continue
+		}
+		if ftype.PkgPath != "" { // unexported field
+			continue
+		}
+		key := ftype.Name
+		value := v.Field(i).Interface()
+		fields[key] = fmt.Sprintf("%v", value)
+	}
+
+	return fields
 }

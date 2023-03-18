@@ -2,6 +2,7 @@ package goners
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/google/gopacket"
@@ -29,9 +30,11 @@ func TestNewPacket(t *testing.T) {
 		}
 		t.Logf(string(packetJson))
 
-
 		for i, l := range packet.Layers {
 			t.Logf("--- Layer %v (%v): \n%v\n", i, l.LayerType, l.Dump())
+			for k, v := range l.Fields() {
+				fmt.Printf("\tfield %q: %q\n", k, v)
+			}
 		}
 
 		break
