@@ -1,6 +1,7 @@
 package goners
 
 import (
+	"encoding/json"
 	"net"
 	"strconv"
 	"strings"
@@ -91,14 +92,6 @@ func NewAddr(addr net.Addr) Addr {
 func (a Addr) TypeString() string {
 	var sb strings.Builder
 
-	// for i, s := range ipTypeToString {
-	// 	if (1<<i)&a.Type != 0 {
-	// 		if sb.Len() > 0 {
-	// 			sb.WriteString(", ")
-	// 		}
-	// 		sb.WriteString(s)
-	// 	}
-	// }
 	for _, t := range ipTypeMappings {
 		if t.ipType&a.IPType != 0 {
 			if sb.Len() > 0 {
@@ -112,6 +105,19 @@ func (a Addr) TypeString() string {
 
 func (a Addr) IsIPv4() bool {
 	return a.netIp.To4() != nil
+}
+
+// AddrView is Addr: workaround for add IPTypeStr() retvalue into Addr's json.
+type AddrView Addr
+
+func (a Addr) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		AddrView
+		IPTypeStr string `json:"ip_type_str"` // appended: method() -> field
+	}{
+		AddrView:  AddrView(a),
+		IPTypeStr: a.TypeString(),
+	})
 }
 
 // IP address types: bitset in an int64.

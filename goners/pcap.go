@@ -3,6 +3,7 @@ package goners
 import (
 	"bytes"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -15,11 +16,11 @@ import (
 
 // Packet is a View to gopacket.Packet
 type Packet struct {
-	DeviceIndex int
-	Timestamp   time.Time // gopacket.Packet.Metadata().Timestamp
+	DeviceIndex int       `json:"device_index"`
+	Timestamp   time.Time `json:"timestamp"` // gopacket.Packet.Metadata().Timestamp
 
-	Length        int // gopacket.Packet.Metadata().Length
-	CaptureLength int // gopacket.Packet.Metadata().CaptureLength
+	Length        int `json:"length"`         // gopacket.Packet.Metadata().Length
+	CaptureLength int `json:"capture_length"` // gopacket.Packet.Metadata().CaptureLength
 
 	Layers []Layer
 
@@ -52,12 +53,12 @@ func NewPacket(packet gopacket.Packet) *Packet {
 // TransportLayer: SrcPort, DstPort
 // ApplicationLayer: Payload
 type Layer struct {
-	LayerType string
+	LayerType string `json:"layer_type"`
 
-	Src string
-	Dst string
+	Src string `json:"src"`
+	Dst string `json:"dst"`
 
-	Payload []byte
+	Payload []byte `json:"payload"`
 
 	layer gopacket.Layer
 }
@@ -137,6 +138,21 @@ func (l Layer) Fields() map[string]string {
 	}
 
 	return fields
+}
+
+// LayerView is Layer: workaround for add Dump() & Fields() retvalue into Layer's json.
+type LayerView Layer
+
+func (l Layer) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		LayerView
+		Dump   string            `json:"dump"`
+		Fields map[string]string `json:"fields"`
+	}{
+		LayerView: LayerView(l),
+		Dump:      l.Dump(),
+		Fields:    l.Fields(),
+	})
 }
 
 const BlockForever = pcap.BlockForever
