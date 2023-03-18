@@ -5,10 +5,12 @@ import (
 	"encoding/hex"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/google/gopacket"
 	_ "github.com/google/gopacket/layers"
+	"github.com/google/gopacket/pcap"
 )
 
 // Packet is a View to gopacket.Packet
@@ -24,7 +26,7 @@ type Packet struct {
 	packet gopacket.Packet
 }
 
-func NewPacket(packet gopacket.Packet) Packet {
+func NewPacket(packet gopacket.Packet) *Packet {
 	p := Packet{
 		packet: packet,
 
@@ -40,7 +42,7 @@ func NewPacket(packet gopacket.Packet) Packet {
 		p.Layers = append(p.Layers, NewLayer(layer))
 	}
 
-	return p
+	return &p
 }
 
 // Layer : LinkLayer, NetworkLayer, TransportLayer, ApplicationLayer
@@ -135,4 +137,36 @@ func (l Layer) Fields() map[string]string {
 	}
 
 	return fields
+}
+
+const BlockForever = pcap.BlockForever
+
+var ChanBufSize = 16
+
+func CaptureLivePackets(
+	device string, bpf string, snaplen int32, promisc bool, timeout time.Duration,
+) (chan *Packet, error) {
+	chOut := make(chan *Packet, ChanBufSize)
+
+	handle, err := pcap.OpenLive(device, snaplen, promisc, timeout)
+	if err != nil {
+		return nil, err
+	}
+
+	bpf = strings.TrimSpace(bpf)
+	if bpf != "" {
+		if err := handle.SetBPFFilter(bpf); err != nil {
+			return nil, err
+		}
+	}
+
+	go func() {
+		packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
+		for packet := range packetSource.Packets() {
+			p := NewPacket(packet)
+			chOut <- p
+		}
+	}()
+
+	return chOut, nil
 }
