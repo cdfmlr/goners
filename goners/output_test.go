@@ -2,6 +2,7 @@ package goners
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"path"
 	"testing"
@@ -83,10 +84,12 @@ func TestWebSocketOutput_Output(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			o, err := NewWebSocketOutputer(tt.fields.listenAddr)
-			if err != nil {
-				t.Fatal(err)
-			}
+			o, handler := NewWebSocketOutputer()
+			go func() {
+				mux := http.NewServeMux()
+				mux.Handle("/", handler)
+				http.ListenAndServe(tt.fields.listenAddr, mux)
+			}()
 
 			go o.Output(tt.args.in)
 

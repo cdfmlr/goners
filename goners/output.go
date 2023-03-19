@@ -3,7 +3,6 @@ package goners
 import (
 	"encoding/json"
 	"io"
-	"net/http"
 	"os"
 
 	"github.com/cdfmlr/goners/wsforwarder"
@@ -41,7 +40,7 @@ type webSocketOutputer struct {
 	forwarder wsforwarder.Forwarder
 }
 
-func NewWebSocketOutputer(listenAddr string) (Outputer, error) {
+func NewWebSocketOutputer() (Outputer, websocket.Handler) {
 	wso := &webSocketOutputer{
 		forwarder: wsforwarder.NewMessageForwarder(),
 	}
@@ -50,12 +49,7 @@ func NewWebSocketOutputer(listenAddr string) (Outputer, error) {
 		wso.forwarder.ForwardMessageTo(c)
 	})
 
-	go func() {
-		mux := http.NewServeMux()
-		mux.Handle("/", handler)
-		http.ListenAndServe(listenAddr, mux)
-	}()
-	return wso, nil
+	return wso, handler
 }
 
 func (o webSocketOutputer) Output(in <-chan []byte) {
