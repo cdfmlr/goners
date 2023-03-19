@@ -89,6 +89,30 @@ func (p Packet) Flow() (src string, dst string) {
 	return src, dst
 }
 
+// PacketType returns the most high-level protocol.
+func (p Packet) PacketType() string {
+	if len(p.Layers) == 0 {
+		return "UNK"
+	}
+	return p.Layers[len(p.Layers)-1].LayerType
+}
+
+type PacketView Packet
+
+func (p Packet) MarshalJSON() ([]byte, error) {
+	src, dst := p.Flow()
+
+	return json.Marshal(struct {
+		PacketView
+		Src string `json:"src"`
+		Dst string `json:"dst"`
+	}{
+		PacketView: PacketView(p),
+		Src:        src,
+		Dst:        dst,
+	})
+}
+
 // Layer : LinkLayer, NetworkLayer, TransportLayer, ApplicationLayer
 //
 // LinkLayer: SrcMAC, DstMAC
@@ -270,6 +294,7 @@ func CaptureLivePackets(
 			p := NewPacket(packet)
 			chOut <- p
 		}
+		close(chOut)
 	}()
 
 	return chOut, nil
