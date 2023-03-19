@@ -2,6 +2,7 @@ package goners
 
 import (
 	"encoding/json"
+	"fmt"
 	"net"
 	"strconv"
 	"strings"
@@ -41,6 +42,16 @@ func NewDevice(dev net.Interface) Device {
 	}
 
 	return d
+}
+
+func (d Device) String() string {
+	sb := strings.Builder{}
+	sb.WriteString(fmt.Sprintf("(%v) %s: %s", d.Index, d.Name, d.HardwareAddr))
+	for _, a := range d.Addrs {
+		sb.WriteString("\n\t")
+		sb.WriteString(strings.ReplaceAll(a.String(), "\n", "\n\t"))
+	}
+	return sb.String()
 }
 
 // Addr is a view to net.Addr + net.IP
@@ -118,6 +129,11 @@ func (a Addr) MarshalJSON() ([]byte, error) {
 		AddrView:  AddrView(a),
 		IPTypeStr: a.TypeString(),
 	})
+}
+
+func (a Addr) String() string {
+	return fmt.Sprintf("%s %s (prefixlen %v) %s",
+		a.NetworkName, a.IP, a.Prefix, a.TypeString())
 }
 
 // IP address types: bitset in an int64.

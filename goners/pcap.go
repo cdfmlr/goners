@@ -46,6 +46,49 @@ func NewPacket(packet gopacket.Packet) *Packet {
 	return &p
 }
 
+// To pretty print this, a tty with 96+ chars width is required.
+func (p Packet) String() string {
+	var sb strings.Builder
+
+	src, dst := p.Flow()
+	// TODO: PACKET -> type (e.g. HTTP, TCP, ...)
+	sb.WriteString(fmt.Sprintf("%v: %v -> %v @ %v\n",
+		"PACKET", src, dst, p.Timestamp))
+	sb.WriteString(fmt.Sprintf("\tLength: %v (Captured %v) from device %v\n",
+		p.Length, p.CaptureLength, p.DeviceIndex))
+
+	for i, l := range p.Layers {
+		sb.WriteString(fmt.Sprintf("  Layer %v ", i+1))
+		sb.WriteString(strings.TrimSuffix(strings.ReplaceAll(l.String(), "\n", "\n\t"), "\t"))
+	}
+
+	return sb.String()
+}
+
+// Flow returns the most high-level readable description
+// to the packet flow: src -> dst.
+func (p Packet) Flow() (src string, dst string) {
+	if len(p.Layers) >= 1 { // Link: MAC -> MAC
+		src = p.Layers[0].Src
+		dst = p.Layers[0].Dst
+	}
+	if len(p.Layers) >= 2 { // Network: IP -> IP
+		src = p.Layers[1].Src
+		dst = p.Layers[1].Dst
+	}
+	if len(p.Layers) >= 3 { // Transport: IP:port -> IP:port
+		if strings.Contains(src, ":") {
+			src = fmt.Sprintf("[%s]", src)
+		}
+		if strings.Contains(dst, ":") {
+			dst = fmt.Sprintf("[%s]", dst)
+		}
+		src = fmt.Sprintf("%s:%s", src, p.Layers[2].Src)
+		dst = fmt.Sprintf("%s:%s", dst, p.Layers[2].Dst)
+	}
+	return src, dst
+}
+
 // Layer : LinkLayer, NetworkLayer, TransportLayer, ApplicationLayer
 //
 // LinkLayer: SrcMAC, DstMAC
@@ -138,6 +181,51 @@ func (l Layer) Fields() map[string]string {
 	}
 
 	return fields
+}
+
+const maxLineWidth = 80
+const prettyFieldLen = 25 // 25 * 3 < 80
+
+func (l Layer) String() string {
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("%v: src %v -> dst %v\n",
+		l.LayerType, l.Src, l.Dst))
+
+	// fields:
+	// |    k: v    k: v    k: v    k: v    |
+	// |    longK: ---longV---              |
+	sb.WriteString("Fields:\n")
+	line := make([]string, 0, 4)
+	longFields := make(map[string]string)
+	for k, v := range l.Fields() {
+		if len(k)+2+len(v) >= prettyFieldLen {
+			longFields[k] = v
+			continue
+		}
+		line = append(line,
+			fmt.Sprintf("%-16s", fmt.Sprintf("%v: %v", k, v)))
+		if len(line) >= maxLineWidth/prettyFieldLen-1 {
+			sb.WriteString("\t")
+			sb.WriteString(strings.Join(line, "\t"))
+			sb.WriteString("\n")
+			line = []string{}
+		}
+	}
+	if len(line) != 0 {
+		sb.WriteString("\t")
+		sb.WriteString(strings.Join(line, "\t"))
+		sb.WriteString("\n")
+	}
+	for k, v := range longFields {
+		sb.WriteString("\t")
+		sb.WriteString(fmt.Sprintf("%v: %v\n", k, v))
+	}
+
+	// Dump content
+	sb.WriteString("Dump:\n\t")
+	sb.WriteString(strings.TrimSuffix(strings.ReplaceAll(l.Dump(), "\n", "\n\t"), "\t"))
+
+	return sb.String()
 }
 
 // LayerView is Layer: workaround for add Dump() & Fields() retvalue into Layer's json.
