@@ -3,9 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/cdfmlr/goners"
 	"github.com/urfave/cli/v2"
+	"golang.org/x/exp/slog"
+	"golang.org/x/net/websocket"
 )
 
 func commandDevices() *cli.Command {
@@ -59,7 +62,7 @@ func commandPcap() *cli.Command {
 			},
 			&cli.StringFlag{
 				Name:     "ws",
-				Usage:    "Output caputred packtes by WebSocket (listen and serve `ADDR`).",
+				Usage:    "Output caputred packtes by WebSocket (listen `ADDR` and serve ws at \"/\").",
 				Category: flagCategoryOutput,
 			},
 		},
@@ -86,15 +89,23 @@ func commandPcap() *cli.Command {
 					cli.Exit(fmt.Sprintf("failed to output into %v: %v", f, err), 14)
 				}
 			case ctx.String("ws") != "":
-				// TODO
-				panic("not implemented")
+				addr := ctx.String("ws")
+
+				var ws websocket.Handler
+				out, ws = goners.NewWebSocketOutputer()
+
+				go func() {
+					mux := http.NewServeMux()
+					mux.Handle("/", ws)
+					slog.Info("Listen and serve http",
+						"addr", addr, "websocket", "/")
+					if err := http.ListenAndServe(addr, mux); err != nil {
+						cli.Exit(fmt.Sprintf("failed to listen and serve ws: %v", err), 15)
+					}
+				}()
 			default:
-				// for p := range packets {
-				// 	fmt.Println(p.String())
-				// }
-				// return nil
 				if out, err = goners.NewFileOutputer("/dev/stdout"); err != nil {
-					cli.Exit(fmt.Sprintf("failed to output into /dev/stdout: %v", err), 14)
+					cli.Exit(fmt.Sprintf("failed to output into /dev/stdout: %v", err), 16)
 				}
 			}
 
