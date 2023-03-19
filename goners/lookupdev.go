@@ -22,8 +22,8 @@ type Device struct {
 }
 
 // NewDevice converts net.Interface into a Device
-func NewDevice(dev net.Interface) Device {
-	d := Device{netInterface: dev}
+func NewDevice(dev net.Interface) *Device {
+	d := &Device{netInterface: dev}
 
 	d.Index = dev.Index
 	d.Name = dev.Name
@@ -174,13 +174,13 @@ var ipTypeMappings = []ipTypeMapping{
 }
 
 // LookupDevices lists local network interfaces into a []Device.
-func LookupDevices() ([]Device, error) {
+func LookupDevices() ([]*Device, error) {
 	netInterfaces, err := net.Interfaces()
 	if err != nil {
 		return nil, err
 	}
 
-	devices := make([]Device, 0, len(netInterfaces))
+	devices := make([]*Device, 0, len(netInterfaces))
 	for _, ni := range netInterfaces {
 		devices = append(devices, NewDevice(ni))
 	}

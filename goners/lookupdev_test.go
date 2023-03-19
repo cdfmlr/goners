@@ -86,7 +86,7 @@ func TestNewDevice(t *testing.T) {
 	for _, ni := range netInterfaces {
 		got := NewDevice(ni)
 
-		gotVal := reflect.ValueOf(got)
+		gotVal := reflect.ValueOf(got).Elem()
 		for i := 0; i < gotVal.NumField(); i++ {
 			fieldName := gotVal.Type().Field(i).Name
 			if fieldName == "HardwareAddr" {
