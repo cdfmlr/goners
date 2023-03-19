@@ -3,7 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/cdfmlr/goners"
 	"github.com/urfave/cli/v2"
@@ -21,7 +23,7 @@ func commandDevices() *cli.Command {
 		Action: func(ctx *cli.Context) error {
 			devices, err := goners.LookupDevices()
 			if err != nil {
-				return cli.Exit(fmt.Sprintf("failed to lookup devices: %v.", err), 11)
+				log.Fatalf("failed to lookup devices: %v.", err)
 			}
 
 			switch ctx.String("format") {
@@ -32,7 +34,7 @@ func commandDevices() *cli.Command {
 			case "json":
 				j, err := json.Marshal(devices)
 				if err != nil {
-					return cli.Exit(fmt.Sprintf("failed to marshal json: %v.", err), 12)
+					log.Fatalf("failed to marshal json: %v.", err)
 				}
 				fmt.Println(string(j))
 			}
@@ -46,6 +48,8 @@ func commandPcap() *cli.Command {
 	    Default output is STDOUT. (require a tty with 96 chars width for pretty-print text format)
 	    (the requirement is satisfied if you can see above sentence in one line.)
 	    Use one of --output FILE or --ws ADDR to override it.`
+
+	flagCategoryConfig := `CONFIG: configures the pcap.`
 
 	return &cli.Command{
 		Name:  "pcap",
@@ -65,12 +69,49 @@ func commandPcap() *cli.Command {
 				Usage:    "Output caputred packtes by WebSocket (listen `ADDR` and serve ws at \"/\").",
 				Category: flagCategoryOutput,
 			},
+			&cli.StringFlag{
+				Name:     "filter",
+				Usage:    "sets a `BPF` filter for the pcap (syntax reference: https://biot.com/capstats/bpf.html).",
+				Category: flagCategoryConfig,
+			},
+			&cli.IntFlag{
+				Name:     "snaplen",
+				Aliases:  []string{"s"},
+				Value:    262144, // tcpdump default snaplen
+				Usage:    "Snarf snaplen `BYTES` of data from each packet. Packets will be truncated because of a limited snapshot",
+				Category: flagCategoryConfig,
+			},
+			&cli.BoolFlag{
+				Name:     "promisc",
+				Usage:    "whether to put the interface in promiscuous mode",
+				Value:    false,
+				Category: flagCategoryConfig,
+			},
+			&cli.Int64Flag{
+				Name:        "timeout",
+				Usage:       "timeout in `SECONDS` to stop the capturing. <0 means block forever.",
+				Value:       int64(goners.BlockForever),
+				DefaultText: "BlockForever",
+				Category:    flagCategoryConfig,
+			},
 		},
 		Action: func(ctx *cli.Context) error {
+			var timeout time.Duration
+			if ctx.Int64("timeout") < 0 {
+				timeout = goners.BlockForever
+			} else {
+				timeout = time.Second * time.Duration(ctx.Int64("timeout"))
+			}
+
 			packets, err := goners.CaptureLivePackets(
-				ctx.Args().First(), "", 16385, true, goners.BlockForever)
+				ctx.Args().First(),
+				ctx.String("filter"),
+				int32(ctx.Int("snaplen")),
+				ctx.Bool("promisc"),
+				timeout,
+			)
 			if err != nil {
-				cli.Exit(fmt.Sprintf("failed to capture live packets: %v", err), 13)
+				log.Fatalf("failed to capture live packets: %v", err)
 			}
 
 			var formater goners.PacketsFormater
@@ -86,7 +127,7 @@ func commandPcap() *cli.Command {
 			case ctx.String("output") != "":
 				f := ctx.String("output")
 				if out, err = goners.NewFileOutputer(f); err != nil {
-					cli.Exit(fmt.Sprintf("failed to output into %v: %v", f, err), 14)
+					log.Fatalf("failed to output into %v: %v", f, err)
 				}
 			case ctx.String("ws") != "":
 				addr := ctx.String("ws")
@@ -100,12 +141,12 @@ func commandPcap() *cli.Command {
 					slog.Info("Listen and serve http",
 						"addr", addr, "websocket", "/")
 					if err := http.ListenAndServe(addr, mux); err != nil {
-						cli.Exit(fmt.Sprintf("failed to listen and serve ws: %v", err), 15)
+						log.Fatalf("failed to listen and serve ws: %v", err)
 					}
 				}()
 			default:
 				if out, err = goners.NewFileOutputer("/dev/stdout"); err != nil {
-					cli.Exit(fmt.Sprintf("failed to output into /dev/stdout: %v", err), 16)
+					log.Fatalf("failed to output into /dev/stdout: %v", err)
 				}
 			}
 
