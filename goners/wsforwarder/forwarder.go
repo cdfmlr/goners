@@ -3,7 +3,7 @@
 // - from https://github.com/cdfmlr/live2ddriver.
 // - included in https://github.com/cdfmlr/muvtuber under the MIT License.
 //
-// Update: log -> slog
+// Update: log -> logger
 package wsforwarder
 
 import (
@@ -13,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/exp/slog"
 	"golang.org/x/net/websocket"
 )
 
@@ -79,7 +78,7 @@ func (f *messageForwarder) ForwardMessageTo(ws *websocket.Conn) {
 //
 // Block until message is sent to all clients.
 func (f *messageForwarder) SendMessage(msg []byte) {
-	slog.Info("SendMessage", "msg", string(msg))
+	logger.Info("SendMessage", "msg", string(msg))
 
 	f.mu.RLock()
 	defer f.mu.RUnlock()
@@ -109,10 +108,10 @@ func (f *messageForwarder) ForwardMessageFrom(msgCh <-chan []byte) {
 //	`{"expression": "f03"}`
 func forwardMessage(msgCh <-chan []byte, ws *websocket.Conn) {
 	for msg := range msgCh {
-		slog.Info(fmt.Sprintf("fwd msg: %s -> %s (chan %v).", string(msg), ws.RemoteAddr(), msgCh))
+		logger.Info(fmt.Sprintf("fwd msg: %s -> %s (chan %v).", string(msg), ws.RemoteAddr(), msgCh))
 		_, err := ws.Write(msg)
 		if err != nil {
-			slog.Info(fmt.Sprintf("fwd msg to %s (chan %v) error: %s.", ws.RemoteAddr(), msgCh, err))
+			logger.Info(fmt.Sprintf("fwd msg to %s (chan %v) error: %s.", ws.RemoteAddr(), msgCh, err))
 			break
 		}
 	}
@@ -125,7 +124,7 @@ func forwardMessage(msgCh <-chan []byte, ws *websocket.Conn) {
 //
 // Block until EOF (that is, never).
 func (f *messageForwarder) ForwardMessageFromStdin() {
-	slog.Info("(in) Forwarding messages from stdin to WebSocket clients...\n")
+	logger.Info("(in) Forwarding messages from stdin to WebSocket clients...\n")
 	time.Sleep(time.Millisecond * 200) // 太快了日志和输入提示交错不好看
 	scanner := bufio.NewScanner(os.Stdin)
 	fmt.Printf("Enter a message to send: ")
