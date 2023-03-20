@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/cdfmlr/goners"
+	"github.com/cdfmlr/goners/api"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/exp/slog"
 	"golang.org/x/net/websocket"
@@ -159,6 +160,35 @@ func commandPcap() *cli.Command {
 	}
 }
 
+func commandHttp() *cli.Command {
+	apiUsage := `
+	devicse:
+		GET    /devices           lookup devices
+	pcap:
+		POST   /pcap              start a capturing session
+		DELETE /pcap              stop & close a capturing session
+		WS     /pcap/{sessionID}  get packets`
+
+	return &cli.Command{
+		Name:  "http",
+		Usage: "Listen and serve goners api service on HTTP.\n" + apiUsage,
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "addr",
+				Value: "localhost:9800",
+				Usage: "start HTTP service on `HOST:PORT`",
+			},
+		},
+		Action: func(ctx *cli.Context) error {
+			r := api.NewHttp()
+			if err := r.Run(ctx.String("addr")); err != nil {
+				log.Fatalf("Run HTTP failed with error: %v", err)
+			}
+			return nil
+		},
+	}
+}
+
 func flagFormat() *cli.StringFlag {
 	return &cli.StringFlag{
 		Name:  "format",
@@ -182,6 +212,7 @@ var app = &cli.App{
 	Commands: []*cli.Command{
 		commandDevices(),
 		commandPcap(),
+		commandHttp(),
 	},
 	Action: func(ctx *cli.Context) error {
 		cli.ShowAppHelp(ctx)
