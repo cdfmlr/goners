@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -104,6 +105,7 @@ func commandPcap() *cli.Command {
 			}
 
 			packets, err := goners.CaptureLivePackets(
+				context.Background(),
 				ctx.Args().First(),
 				ctx.String("filter"),
 				int32(ctx.Int("snaplen")),

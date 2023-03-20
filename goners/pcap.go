@@ -2,6 +2,7 @@ package goners
 
 import (
 	"bytes"
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -271,7 +272,7 @@ const BlockForever = pcap.BlockForever
 
 var ChanBufSize = 16
 
-func CaptureLivePackets(
+func CaptureLivePackets(ctx context.Context,
 	device string, bpf string, snaplen int32, promisc bool, timeout time.Duration,
 ) (chan *Packet, error) {
 	chOut := make(chan *Packet, ChanBufSize)
@@ -280,6 +281,7 @@ func CaptureLivePackets(
 	if err != nil {
 		return nil, err
 	}
+	// handle.Close()
 
 	bpf = strings.TrimSpace(bpf)
 	if bpf != "" {
@@ -289,12 +291,18 @@ func CaptureLivePackets(
 	}
 
 	go func() {
+		defer close(chOut)
 		packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
-		for packet := range packetSource.Packets() {
-			p := NewPacket(packet)
-			chOut <- p
+		for {
+			select {
+			case packet := <- packetSource.Packets():
+				p := NewPacket(packet)
+				chOut <- p
+			case <-ctx.Done():
+				handle.Close()
+				return
+			}
 		}
-		close(chOut)
 	}()
 
 	return chOut, nil
