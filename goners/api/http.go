@@ -68,14 +68,26 @@ type StartPcapRequest struct {
 	Output  string        `json:"output"`
 }
 
+func newDefaultStartPcapRequest() *StartPcapRequest {
+	return &StartPcapRequest{
+		Device:  "",
+		Filter:  "",
+		Snaplen: 262144,
+		Promisc: false,
+		Timeout: goners.BlockForever,
+		Format:  "json",
+		Output:  "ws",
+	}
+}
+
 type StartPcapResponse struct {
 	SessionID goners.SessionID `json:"session_id"`
 }
 
 // POST /pcap
 func StartPcap(c *gin.Context) {
-	req := StartPcapRequest{}
-	if err := c.ShouldBindJSON(&req); err != nil {
+	req := newDefaultStartPcapRequest()
+	if err := c.ShouldBindJSON(req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
@@ -94,7 +106,7 @@ func StartPcap(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-func startPcap(req StartPcapRequest) (StartPcapResponse, error) {
+func startPcap(req *StartPcapRequest) (StartPcapResponse, error) {
 	config := goners.PcapSessionConfig{
 		Device:  req.Device,
 		Filter:  req.Filter,
@@ -130,7 +142,9 @@ type StopPcapRequest struct {
 	SessionID goners.SessionID `json:"session_id"`
 }
 
-type StopPcapResponse struct{}
+type StopPcapResponse struct {
+	DeletedSessionID goners.SessionID `json:"deleted_session_id"`
+}
 
 // DELETE /pcap
 func StopPcap(c *gin.Context) {
@@ -156,7 +170,7 @@ func StopPcap(c *gin.Context) {
 func stopPcap(req StopPcapRequest) (StopPcapResponse, error) {
 	err := goners.GetPcapSessionsManager().CloseSession(req.SessionID)
 	wssessions.Delete(req.SessionID)
-	return StopPcapResponse{}, err
+	return StopPcapResponse{DeletedSessionID: req.SessionID}, err
 }
 
 // WS /pcap/{sessionID}

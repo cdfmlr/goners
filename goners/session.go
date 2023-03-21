@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/exp/slog"
 )
 
 type SessionID string
@@ -67,6 +68,9 @@ func (m *pcapSessionsManager) StartSession(config *PcapSessionConfig) (SessionID
 		cancel: cancel,
 	}
 
+	slog.Info("pcap sessions manager starts session.",
+		"sessionID", sessionID, "config", config)
+
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -100,6 +104,9 @@ func (m *pcapSessionsManager) CloseSession(id SessionID) error {
 
 	session.cancel()
 	delete(m.sessions, id)
+
+	slog.Info("pcap sessions manager close session.",
+		"sessionID", id)
 
 	return nil
 }
