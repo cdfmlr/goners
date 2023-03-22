@@ -2,7 +2,7 @@
 
 > Goner's Oafish Network Explorer & Reliable Sniffer.
 
-`goners` 是一个可拓展的、模块化设计的网络嗅探器。`goners` 后端基于 Go 语言实现，前端使用 Vue 3 （Quasar）构建。“goners”一词是“Goner's Oafish Network Explorer & Reliable Sniffer”的递归缩写。
+`goners` 是一个可拓展的、模块化设计的网络嗅探器。`goners` 后端基于 Go 语言实现，前端使用 Vue 3 （Quasar）构建。“goners”一词是“Goner's Oafish Network Explorer & Reliable Sniffer”的递归缩写，与其字面上的“无法挽救的人；完蛋的事物”无关。
 
 `goners` 提供如下特性：
 
