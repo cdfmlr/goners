@@ -122,7 +122,7 @@ func ExampleLookupDevices() {
 	if err != nil {
 		panic(err)
 	}
-	
+
 	fmt.Printf("%v devices:", len(devices))
 	fmt.Println(string(devicesJson))
 }

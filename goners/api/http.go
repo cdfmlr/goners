@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/cdfmlr/goners"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/exp/slog"
 	"golang.org/x/net/websocket"
@@ -209,6 +210,7 @@ func RegisterHttpApi(r *gin.Engine) {
 // router
 func NewHttp() *gin.Engine {
 	r := gin.Default()
+	r.Use(cors.Default()) // cors: allow all
 	RegisterHttpApi(r)
 	return r
 }

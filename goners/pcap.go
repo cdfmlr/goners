@@ -23,7 +23,7 @@ type Packet struct {
 	Length        int `json:"length"`         // gopacket.Packet.Metadata().Length
 	CaptureLength int `json:"capture_length"` // gopacket.Packet.Metadata().CaptureLength
 
-	Layers []Layer
+	Layers []Layer `json:"layers"`
 
 	packet gopacket.Packet
 }
@@ -105,12 +105,14 @@ func (p Packet) MarshalJSON() ([]byte, error) {
 
 	return json.Marshal(struct {
 		PacketView
-		Src string `json:"src"`
-		Dst string `json:"dst"`
+		Src        string `json:"src"`
+		Dst        string `json:"dst"`
+		PacketType string `json:"packet_type"`
 	}{
 		PacketView: PacketView(p),
 		Src:        src,
 		Dst:        dst,
+		PacketType: p.PacketType(),
 	})
 }
 
@@ -295,7 +297,7 @@ func CaptureLivePackets(ctx context.Context,
 		packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 		for {
 			select {
-			case packet := <- packetSource.Packets():
+			case packet := <-packetSource.Packets():
 				p := NewPacket(packet)
 				chOut <- p
 			case <-ctx.Done():

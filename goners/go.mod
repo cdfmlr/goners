@@ -3,6 +3,7 @@ module github.com/cdfmlr/goners
 go 1.20
 
 require (
+	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.9.0
 	github.com/google/gopacket v1.1.19
 	github.com/google/uuid v1.3.0
