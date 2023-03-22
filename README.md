@@ -2,7 +2,7 @@
 
 > Goner's Oafish Network Explorer & Reliable Sniffer.
 
-`goners` 是一个可拓展的、模块化设计的网络嗅探器。`goners` 后端使用 Go 语言实现，前端使用 Vue 3 （Quasar）构建。
+`goners` 是一个可拓展的、模块化设计的网络嗅探器。`goners` 后端基于 Go 语言实现，前端使用 Vue 3 （Quasar）构建。“goners”一词是“Goner's Oafish Network Explorer & Reliable Sniffer”的递归缩写。
 
 `goners` 提供如下特性：
 
@@ -308,10 +308,30 @@ goners 使用 Go 语言实现了一个网络抓包工具，可以列出本地网
 
 除了核心的 goners 包，程序中还包含了 `cmd`、 `api` 以及 `wsforwarder` 几个子模块。其中，cmd 实现了 goners 包中对应函数的 CLI 接口，`api/http.go` 实现了 RESTful HTTP API 接口，而 `wsforwarder` 是一个用于将程序内部产生的消息通过 WebSocket 转发给客户端的实用模块。这些模块的设计简单，只是实现繁冗，此处不做赘述。
 
-同样，前端的 WebUI 基于 Vue 3 以及 Quasar 框架，使用 TypeScript 语言、Pinia 状态存储以及 Vite 完成构建。这个程序也只是对上述 goners HTTP API 的简单调用和数据展示，不再详细说明。
+同样，前端的 WebUI 基于 Vue 3 以及 Quasar 框架，使用 TypeScript 语言、Pinia 状态存储以及 Vite 完成构建。这个程序也只是对上述 goners HTTP API 的简单调用和数据展示，不再详细说明。
 
 ## 协议支持
 
 goners 目前支持包括但不限于以下具体协议：
 
 ARP，ASF，BFD，CDP，CiscoDiscovery，DHCP，DNS，DbDescPkg，Dot11（IEEE 802.11），Dot1Q（802.1Q VLAN），EAP，ERSPANII（[ERSPAN Type II](https://tools.ietf.org/html/draft-foschiano-erspan-03)），EtherIP（[RFC 3378](https://rfc-editor.org/rfc/rfc3378.html)），Ethernet，FDDI，GRE（Generic Routing Encapsulation），GTP，[Geneve]( https://tools.ietf.org/html/draft-ietf-nvo3-geneve-03)，HelloPkg（ [RFC 5340](https://rfc-editor.org/rfc/rfc5340.html) A.3.2.），ICMP（v4，v6），IGMP，IP（v4，v6），LCM (Lightweight Communications and Marshalling)，LLC（802.2 Logical Link Control），LLDP，LSA（[RFC 5340](https://rfc-editor.org/rfc/rfc5340.html) A.4.），MPLS，NTP，OSPF，PPP，PPPoE，RADIUS（Remote Authentication Dial In User Service layer），RMCP，RUDP，RadioTap，SCTP，SIP，SNAP，STP（for BPDU），TCP，TLS，UDP，USB，VRRPv2，VXLAN
+
+## 开放源代码
+
+`goners` 在 Apache 2.0 协议下开放源代码。
+
+```
+   Copyright 2023 CDFMLR
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+```
